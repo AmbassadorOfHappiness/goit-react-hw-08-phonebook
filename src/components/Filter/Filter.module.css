@@ -1,0 +1,15 @@
+.filter {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.formInner {
+  border-radius: 2px;
+  /* max-width: 350px; */
+  margin: 20px auto 0;
+  padding: 20px;
+  font-family: "Oswald", sans-serif;
+  text-align: left;
+  width: 400px;
+  border: 2px solid #909090;
+}
