@@ -1,121 +1,44 @@
+import { useEffect, Suspense, lazy } from 'react';
 import { useDispatch } from 'react-redux';
-import { useEffect, useState } from 'react';
-import { Link, Routes, Route  } from 'react-router-dom';
-import './App.css';
+import { Switch } from 'react-router-dom';
+import AppBar from './components/AppBar/AppBar';
+import Container from './components/Container';
+import PrivateRoute from './components/PrivateRoute';
+import PublicRoute from './components/PublicRoute';
+import { authOperations } from './redux/auth';
+import PageLoader from './components/Loader';
 
-import { Home } from './pages/Home';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { PublicRoute } from './routes/PublicRoute';
-import { PrivateRoute } from './routes/PrivateRoute';
-import { currentThunk, logoutThunk } from './redux/auth/thunks';
-import {
-  useFetchContactsQuery,
-  useAddContactMutation,
-  useRemoveContactMutation
-} from './redux/auth/slices';
-
-const isAuth = false;
+const HomeView = lazy(() => import('./views/HomeView'));
+const RegisterView = lazy(() => import('./views/RegisterView'));
+const LoginView = lazy(() => import('./views/LoginView'));
+const ContactsView = lazy(() => import('./views/ContactsView'));
 
 export default function App() {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(currentThunk());
+    dispatch(authOperations.fetchCurrentUser());
   }, [dispatch]);
-  
-  const handleLogout = () => {
-    dispatch(logoutThunk());
-  }
-
-  const { data } = useFetchContactsQuery();
-  const [addContact] = useAddContactMutation();
-  const [ removeContact ] = useRemoveContactMutation();
-  const handleChange = (e) => {
-    switch (e.target.name) {
-      case 'name':
-        setName(e.target.value);
-        break;
-      case 'phone':
-        setPhone(e.target.value);
-        break;
-      default:
-        alert(`Check input name`);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const contact = { name, phone };
-    addContact(contact);
-    reset();
-  }; 
-
-  const reset = () => {
-    setName("");
-    setPhone("");
-  };
-
-  const handleRemove = (e) => {
-    removeContact(e.target.id);
-  };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <nav>
-          <ul>
-            <li>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to="/login">Login</Link>
-            </li>
-            <li>
-              <Link to="/register">Register</Link>
-            </li>
-            <li>
-              <button type="button" onClick={handleLogout}>Log Out</button>
-            </li>
-          </ul>
-        </nav>
-      </header>
-      <main>
-        <section>
-          <h2>ADD CONTACT</h2>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              name="name"
-              value={name}
-              placeholder="Name"
-              onChange={handleChange} />
-            <input
-              type="tel"
-              name="phone"
-              value={phone}
-              placeholder="Phone"
-              onChange={handleChange} />
-            <button type="submit">Add</button>
-          </form>
-        </section>
+    <Container>
+      <AppBar />
 
-        {data && data.map(x => {
-          return <li key={x.id}>{x.name}
-            <button id={x.id} type="button" onClick={handleRemove}>DELETE</button>
-          </li>
-        })}
-        {/* Switch => Routes
-        exact => -
-        component => element */}
-        <Routes>
-          <Route path="/" element={<PrivateRoute isAuth={isAuth} component={Home} />} />
-          <Route path="/login" element={<PublicRoute isAuth={isAuth} component={Login} />} />
-          <Route path="/register" element={<PublicRoute isAuth={isAuth} component={Register} />} />
-        </Routes>
-      </main>
-    </div>
+      <Switch>
+        <Suspense fallback={<PageLoader />}>
+          <PublicRoute exact path="/">
+            <HomeView />
+          </PublicRoute>
+          <PublicRoute exact path="/register" restricted>
+            <RegisterView />
+          </PublicRoute>
+          <PublicRoute exact path="/login" redirectTo="/todos" restricted>
+            <LoginView />
+          </PublicRoute>
+          <PrivateRoute path="/contacts" redirectTo="/login">
+            <ContactsView />
+          </PrivateRoute>
+        </Suspense>
+      </Switch>
+    </Container>
   );
 }

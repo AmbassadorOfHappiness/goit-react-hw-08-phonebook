@@ -1,0 +1,18 @@
+.container {
+  display: flex;
+  align-items: center;
+  padding-right: 18px;
+}
+
+.name {
+  font-weight: 700;
+  margin-right: 18px;
+  color: rgb(255, 255, 255);
+  font-size: 22px;
+}
+
+/* .button {
+  display: block;
+  margin-right: 18px;
+  font-size: 22px;
+} */

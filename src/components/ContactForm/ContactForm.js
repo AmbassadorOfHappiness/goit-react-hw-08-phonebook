@@ -1,69 +1,84 @@
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import style from '../ContactForm/ContactForm.module.css'
-import { useGetContactsQuery, useAddContactMutation} from '../../redux/contacts/slice';
+import { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import contactsOperations from '../../redux/contacts/contacts-operations';
+import { getContacts } from '../../redux/contacts/contacts-selectors';
+import styles from '../ContactForm/ContactForm.module.css';
 
 export default function ContactForm() {
-  const { data } = useGetContactsQuery();
-  const [addContact] = useAddContactMutation();
+  const contacts = useSelector(getContacts);
+  const dispatch = useDispatch();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const name = e.currentTarget.elements.name.value;
-    const phone = e.currentTarget.elements.number.value;
-    if (data.find((el) => el.name.toLowerCase() === name.toLowerCase())) {
-      toast(`🦄 Wow so easy! ${name} is already in contacts`, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-      return;
-    } else {
-      addContact({ name, phone});
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+
+  const handleChange = e => {
+    const { name, value } = e.target;
+
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+
+      case 'number':
+        setNumber(value);
+        break;
+
+      default:
+        return;
     }
-    e.currentTarget.reset();
   };
-    
+
+  const findByName = contactName => {
+    return contacts.some(({ name }) => name === contactName);
+  };
+
+  const handleSubmit = e => {
+    e.preventDefault();
+
+    if (findByName(name)) {
+      alert(`${name} is already in contacts!`);
+      return;
+    }
+
+    dispatch(contactsOperations.addContact({ name, number }));
+
+    setName('');
+    setNumber('');
+  };
+
   return (
-    <>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      <form className={style.formInner} onSubmit={handleSubmit} >
-        <label>Name: 
-          <input
-            className='input'
-            name="name"
-            type="text"
-            autoComplete="off"
-            placeholder="Enter name"
-          />
-          </label>
-           <label>Number:
-          <input
-            className='input'
-            name="number"
-            type="tel"
-            autoComplete="off"
-            pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-            placeholder="Enter phone number"
-            required
-          />
-           </label>
-        <button className='button' type="submit">Add contact</button>
-      </form>
-    </>
+    <form onSubmit={handleSubmit} className={styles.formInner}>
+      <label className={styles.formLabel}>
+        Name
+        <input
+          className={styles.formInput}
+          type="text"
+          name="name"
+          pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
+          title="Имя может состоять только из букв, апострофа, тире и пробелов. Например Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan и т. п."
+          required
+          value={name}
+          onChange={handleChange}
+        />
+      </label>
+      <label className={styles.formLabel}>
+        Number
+        <input
+          className={styles.formInput}
+          type="tel"
+          name="number"
+          pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
+          title="Номер телефона должен состоять цифр и может содержать пробелы, тире, круглые скобки и может начинаться с +"
+          required
+          value={number}
+          onChange={handleChange}
+        />
+      </label>
+
+      <button type="submit" className={styles.buttonSubmit}>
+        Add contact
+      </button>
+    </form>
   );
 }
+

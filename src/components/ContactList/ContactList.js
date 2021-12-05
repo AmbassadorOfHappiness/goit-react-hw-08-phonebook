@@ -1,57 +1,28 @@
-import React from "react";
-import { useSelector } from 'react-redux';
-import Spinner from '../Spinner/Spinner';
-import ContactListItem from './ContactListItem';
-import style from './ContactList.module.css';
-import { useGetContactsQuery} from '../../redux/contacts/slice';
-
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import ContactListItem from '../ContactListItem/ContactListItem';
+import contactsOperations from '../../redux/contacts/contacts-operations';
+import { getVisibleContacts } from '../../redux/contacts/contacts-selectors';
+import styles from '../ContactList/contactList.module.css';
 
 const ContactList = () => {
-  let contacts;
-  const { data, isFetching } = useGetContactsQuery();
-
-  const contact = useSelector(state => state.contacts.filter);
-  if (data) {
-    const normalizedFilter = contact.toLowerCase();
-    contacts = data.filter(contact =>
-      contact.name.toLowerCase().includes(normalizedFilter),
-    );
-  }
+  const contacts = useSelector(getVisibleContacts);
+  const dispatch = useDispatch();
+  const onDeleteContact = id => dispatch(contactsOperations.deleteContact(id));
 
   return (
-    <>
-      {isFetching && <Spinner className={style.title} />}
-      {contacts && 
-        <ul className={style.title}>
-          {contacts.map(contact => (
-            <ContactListItem
-              key={contact.id}
-              {...contact}
-            />
-          ))}
-        </ul>
-      }
-    </>
+    <ul className={styles.title}>
+      {contacts.map(({ id, name, number }) => (
+        <ContactListItem
+          key={id}
+          id={id}
+          name={name}
+          number={number}
+          onDeleteContact={() => onDeleteContact(id)}
+        />
+      ))}
+    </ul>
   );
-
-/*   return (
-    <>
-      {isFetching && <Loader className={style.title} type="BallTriangle" color="#00BFFF" height={80} width={80} />}
-      {contacts && 
-        <ul className={style.title}>
-          {contacts.map(({ id, name, phone }) => (
-            <ContactListItem
-              key={id}
-              id={id}
-              name={name}
-              phone={phone}
-              onRemoveContact={()=> deleteContact(id)}
-            />
-          ))}
-        </ul>
-      }
-    </>
-  ); */
-}
+};
 
 export default ContactList;
